@@ -107,7 +107,6 @@ app.patch('/todos/:id', (req, res) => {
 
 //add User
 app.post('/users', (req,res) => {
-  console.log('here1');
 
   var body = _.pick(req.body, ['email', 'password']);
   var user = new User(body);
@@ -119,7 +118,6 @@ app.post('/users', (req,res) => {
     res.header('x-auth', token).send(user);
   })
   .catch((err) => {
-    console.log(err);
     res.status(400).send(err);
   });
 });
