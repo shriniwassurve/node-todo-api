@@ -43,11 +43,11 @@ var populateTodos = (done) => {
 
 var populateUsers = (done) => {
   User.remove({}).then(() => {
-    return User.insertMany(users);
-    // const userOne = new User(users[0]).save();
-    // const userTwo = new User(users[1]).save();
+    // return User.insertMany(users);
+    const userOne = new User(users[0]).save(); //  this is because we call hash password before each save 
+    const userTwo = new User(users[1]).save();
 
-    // return Promise.all([userOne, userTwo]);
+    return Promise.all([userOne, userTwo]);
   }).then(() => done());
 }
 
