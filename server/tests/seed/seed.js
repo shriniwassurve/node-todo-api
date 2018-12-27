@@ -4,20 +4,22 @@ const {User} = require('./../../models/user');
 const {ObjectID} = require('mongodb');
 const jwt = require('jsonwebtoken');
 
+const userOneId = new ObjectID;
+const userTwoId = new ObjectID;
+
 const todos = [
   {
     _id: new ObjectID,
-    text: 'First test todo'
+    text: 'First test todo',
+    _creator: userOneId
   }, {
     _id: new ObjectID,
     text: 'Second test todo',
     completed: true,
-    completedAt: 1234
+    completedAt: 1234,
+    _creator: userTwoId
   }
 ];
-
-const userOneId = new ObjectID;
-const userTwoId = new ObjectID;
 
 const users = [
   {
@@ -31,7 +33,11 @@ const users = [
   }, {
     _id: userTwoId,
     email : 'shriniwas.surve@example.com',
-    password: 'abcd123'
+    password: 'abcd123',
+    tokens: [{
+      access: 'auth',
+      token: jwt.sign({_id: userTwoId, access: 'auth'}, 'abc123').toString()
+    }]
   }
 ]
 
@@ -44,7 +50,7 @@ var populateTodos = (done) => {
 var populateUsers = (done) => {
   User.remove({}).then(() => {
     // return User.insertMany(users);
-    const userOne = new User(users[0]).save(); //  this is because we call hash password before each save 
+    const userOne = new User(users[0]).save(); //  this is because we call hash password before each save
     const userTwo = new User(users[1]).save();
 
     return Promise.all([userOne, userTwo]);
