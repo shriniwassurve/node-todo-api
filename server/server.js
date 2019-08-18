@@ -18,7 +18,7 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 
 //add todo
-app.post('/todos', authenticate, (req,res) => {
+app.post('/todos', authenticate, async (req,res) => {
   var todo = new Todo({
     text: req.body.text,
     completed: req.body.completed,
@@ -26,11 +26,12 @@ app.post('/todos', authenticate, (req,res) => {
     _creator: req.user._id
   });
 
-  todo.save().then((doc) => {
+  try {
+    const doc = await todo.save();
     res.send(doc);
-  }, (err) => {
-    res.status(400).send(err);
-  });
+  } catch (err) {
+    res.status(400).send(err);  
+  }
 });
 
 //add all todos
@@ -66,7 +67,7 @@ app.get('/todos/:id', authenticate, (req,res) => {
 });
 
 //delete todo by id
-app.delete('/todos/:id', authenticate,  (req,res) => {
+app.delete('/todos/:id', authenticate,  async (req,res) => {
   // console.log('user: ', req.user);
   var id = req.params.id;
 
@@ -75,17 +76,18 @@ app.delete('/todos/:id', authenticate,  (req,res) => {
     return res.status(404).send('Not Found');
   }
 
-  Todo.findOneAndRemove({
-    _id: id,
-    _creator: req.user._id
-  }).then((todo) => {
+  try {
+    const todo = await Todo.findOneAndRemove({
+      _id: id,
+      _creator: req.user._id
+    });
     if(!todo) {
       return res.status(404).send('Not Found');
     }
     res.send({todo});
-  }).catch((e) => {
+  } catch (err) {
     res.status(400).send();
-  });
+  }
 });
 
 // Update todo
@@ -116,20 +118,16 @@ app.patch('/todos/:id', authenticate, (req, res) => {
 });
 
 //add User
-app.post('/users', (req,res) => {
-
-  var body = _.pick(req.body, ['email', 'password']);
-  var user = new User(body);
-
-  user.save().then(() => {
-    return user.generateAuthToken();
-  })
-  .then((token) => {
+app.post('/users', async (req,res) => {
+  try {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User(body);
+    await user.save();
+    const token = user.generateAuthToken();
     res.header('x-auth', token).send(user);
-  })
-  .catch((err) => {
+  } catch (err) {
     res.status(400).send(err);
-  });
+  }
 });
 
 // authenticate user
@@ -138,28 +136,25 @@ app.get('/users/me', authenticate, (req,res) => {
 });
 
 // User login
-app.post('/users/login', (req,res) => {
-  var body = _.pick(req.body, ['email', 'password']);
-
-  User.findByCredentials(body.email, body.password)
-  .then((user) => {
-    return user.generateAuthToken().then((token) => {
-      res.header('x-auth', token).send(user);
-    });
-  })
-  .catch((err) => {
+app.post('/users/login', async (req,res) => {
+  const body = _.pick(req.body, ['email', 'password']);
+  try {
+    const user = await User.findByCredentials(body.email, body.password);
+    const token = await user.generateAuthToken();
+    res.header('x-auth', token).send(user);
+  } catch (err) {
     res.status(400).send(err);
-  });
+  }
 });
 
 // User logout
-app.delete('/users/me/token', authenticate, (req,res) => {
-  req.user.removeToken(req.token).then(() => {
+app.delete('/users/me/token', authenticate, async (req,res) => {
+  try {
+    await req.user.removeToken(req.token);
     res.status(200).send();
-  })
-  .catch(() => {
+  } catch (err) {
     res.status(400).send();
-  });
+  }
 });
 
 app.listen(port, () => {
